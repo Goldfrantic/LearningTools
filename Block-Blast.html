@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Block Blast</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            color: #1e90ff;
+            margin-top: 50px;
+        }
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: #1e90ff;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .back-button:hover {
+            background-color: #4682b4;
+        }
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(8, 50px);
+            grid-template-rows: repeat(8, 50px);
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .block {
+            width: 50px;
+            height: 50px;
+            margin: 2px;
+            display: inline-block;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .block:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Block Blast</h1>
+    <a href="index.html" class="back-button">Back to Home</a>
+
+    <div id="game" class="game-board"></div>
+
+    <script>
+        const boardSize = 8;
+        const colors = ['#FF6347', '#1e90ff', '#32CD32', '#FFD700', '#8A2BE2', '#FF69B4'];
+        let blocks = [];
+        let selectedBlocks = [];
+
+        // Initialize game board
+        function initializeBoard() {
+            const gameBoard = document.getElementById('game');
+            gameBoard.innerHTML = ''; // Reset the board
+            blocks = [];
+
+            // Create a grid of blocks
+            for (let i = 0; i < boardSize * boardSize; i++) {
+                const block = document.createElement('div');
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                block.style.backgroundColor = color;
+                block.classList.add('block');
+                block.dataset.index = i;
+                block.dataset.color = color;
+                block.addEventListener('click', handleBlockClick);
+                gameBoard.appendChild(block);
+                blocks.push(block);
+            }
+        }
+
+        // Handle block click
+        function handleBlockClick(event) {
+            const block = event.target;
+            const index = parseInt(block.dataset.index);
+            const color = block.dataset.color;
+
+            // If block is already selected, remove it
+            if (selectedBlocks.includes(index)) {
+                selectedBlocks = selectedBlocks.filter(i => i !== index);
+                block.style.opacity = 1;
+                return;
+            }
+
+            // Select new block
+            selectedBlocks.push(index);
+            block.style.opacity = 0.5;
+
+            // If at least two blocks of the same color are selected, clear them
+            if (selectedBlocks.length >= 2) {
+                const selectedColors = selectedBlocks.map(i => blocks[i].dataset.color);
+                if (selectedColors.every(c => c === color)) {
+                    selectedBlocks.forEach(i => blocks[i].style.backgroundColor = 'transparent');
+                    selectedBlocks = [];
+                }
+            }
+        }
+
+        // Call the function to start the game
+        initializeBoard();
+    </script>
+</body>
+</html>

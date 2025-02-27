@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breakout</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #2d2d2d;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #gameContainer {
+            position: relative;
+            border: 3px solid #5a5a5a;
+            border-radius: 8px;
+            padding: 20px;
+            background-color: #333;
+        }
+
+        canvas {
+            background-color: #555;
+            display: block;
+            border-radius: 4px;
+            border: 2px solid #444;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffffff;
+            margin-bottom: 20px;
+        }
+
+        .score-lives {
+            font-size: 16px;
+            color: #ffffff;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .score-lives span {
+            padding: 5px 10px;
+            background-color: #444;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <h1>Block Blast</h1>
+        <canvas id="gameCanvas"></canvas>
+        <div class="score-lives">
+            <span id="score">Score: 0</span>
+            <span id="lives">Lives: 3</span>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = 480;
+        canvas.height = 320;
+
+        let paddleWidth = 75;
+        let paddleHeight = 10;
+        let paddleX = (canvas.width - paddleWidth) / 2;
+        let paddleSpeed = 7;
+
+        let ballRadius = 10;
+        let ballX = canvas.width / 2;
+        let ballY = canvas.height - 30;
+        let ballSpeedX = 3;
+        let ballSpeedY = -3;
+
+        let rightPressed = false;
+        let leftPressed = false;
+
+        let blocks = [];
+        let blockRowCount = 5;
+        let blockColumnCount = 7;
+        let blockWidth = 60;
+        let blockHeight = 20;
+        let blockPadding = 10;
+        let blockOffsetTop = 30;
+        let blockOffsetLeft = 30;
+
+        let score = 0;
+        let lives = 3;
+
+        document.addEventListener("keydown", keyDownHandler, false);
+        document.addEventListener("keyup", keyUpHandler, false);
+
+        function keyDownHandler(e) {
+            if (e.key == "Right" || e.key == "ArrowRight") {
+                rightPressed = true;
+            } else if (e.key == "Left" || e.key == "ArrowLeft") {
+                leftPressed = true;
+            }
+        }
+
+        function keyUpHandler(e) {
+            if (e.key == "Right" || e.key == "ArrowRight") {
+                rightPressed = false;
+            } else if (e.key == "Left" || e.key == "ArrowLeft") {
+                leftPressed = false;
+            }
+        }
+
+        function createBlocks() {
+            for (let c = 0; c < blockColumnCount; c++) {
+                blocks[c] = [];
+                for (let r = 0; r < blockRowCount; r++) {
+                    blocks[c][r] = { x: 0, y: 0, status: 1 };
+                }
+            }
+        }
+
+        function drawBlocks() {
+            for (let c = 0; c < blockColumnCount; c++) {
+                for (let r = 0; r < blockRowCount; r++) {
+                    if (blocks[c][r].status == 1) {
+                        let blockX = c * (blockWidth + blockPadding) + blockOffsetLeft;
+                        let blockY = r * (blockHeight + blockPadding) + blockOffsetTop;
+                        blocks[c][r].x = blockX;
+                        blocks[c][r].y = blockY;
+
+                        ctx.beginPath();
+                        ctx.rect(blockX, blockY, blockWidth, blockHeight);
+                        ctx.fillStyle = "#00baff"; // Lighter blue
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+                }
+            }
+        }
+
+        function drawBall() {
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+            ctx.fillStyle = "#ffffff"; // White ball
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawPaddle() {
+            ctx.beginPath();
+            ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+            ctx.fillStyle = "#00baff"; // Matching blue paddle
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function collisionDetection() {
+            for (let c = 0; c < blockColumnCount; c++) {
+                for (let r = 0; r < blockRowCount; r++) {
+                    let b = blocks[c][r];
+                    if (b.status == 1) {
+                        if (ballX > b.x && ballX < b.x + blockWidth && ballY > b.y && ballY < b.y + blockHeight) {
+                            ballSpeedY = -ballSpeedY;
+                            b.status = 0;
+                            score++;
+                            document.getElementById("score").textContent = "Score: " + score;
+                            if (score == blockRowCount * blockColumnCount) {
+                                alert("You Win, Congratulations!");
+                                document.location.reload();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function moveBall() {
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+
+            if (ballX + ballSpeedX > canvas.width - ballRadius || ballX + ballSpeedX < ballRadius) {
+                ballSpeedX = -ballSpeedX;
+            }
+            if (ballY + ballSpeedY < ballRadius) {
+                ballSpeedY = -ballSpeedY;
+            } else if (ballY + ballSpeedY > canvas.height - ballRadius) {
+                if (ballX > paddleX && ballX < paddleX + paddleWidth) {
+                    ballSpeedY = -ballSpeedY;
+                } else {
+                    lives--;
+                    document.getElementById("lives").textContent = "Lives: " + lives;
+                    if (!lives) {
+                        alert("GAME OVER");
+                        document.location.reload();
+                    } else {
+                        ballX = canvas.width / 2;
+                        ballY = canvas.height - 30;
+                        ballSpeedX = 3;
+                        ballSpeedY = -3;
+                        paddleX = (canvas.width - paddleWidth) / 2;
+                    }
+                }
+            }
+        }
+
+        function movePaddle() {
+            if (rightPressed && paddleX < canvas.width - paddleWidth) {
+                paddleX += paddleSpeed;
+            } else if (leftPressed && paddleX > 0) {
+                paddleX -= paddleSpeed;
+            }
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBlocks();
+            drawBall();
+            drawPaddle();
+            collisionDetection();
+            moveBall();
+            movePaddle();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        createBlocks();
+        gameLoop();
+    </script>
+</body>
+</html>
